@@ -4,20 +4,24 @@ namespace rapidweb\googlecontacts\helpers;
 
 abstract class GoogleHelper
 {
+    private static $accessToken;
+
     private static function loadConfig()
     {
-        $contents = file_get_contents(__DIR__.'/../.config.json');
+        return json_decode(
+            file_get_contents(__DIR__ . '/../.config.json'),
+            true
+        );
+    }
 
-        $config = json_decode($contents);
-
-        return $config;
+    public static function setAccessToken(array $accessToken)
+    {
+        self::$accessToken = $accessToken;
     }
 
     public static function getClient()
     {
-        $config = self::loadConfig();
-
-        $client = new \Google_Client();
+        $client = new \Google_Client(static::loadConfig());
 
         $client->setApplicationName('Rapid Web Google Contacts API');
 
@@ -30,16 +34,14 @@ abstract class GoogleHelper
         /*'https://www.google.com/m8/feeds/user/',*/
         ));
 
-        $client->setClientId($config->clientID);
-        $client->setClientSecret($config->clientSecret);
-        $client->setRedirectUri($config->redirectUri);
-        $client->setAccessType('offline');
-        $client->setApprovalPrompt('force');
-        $client->setDeveloperKey($config->developerKey);
-
-        if (isset($config->refreshToken) && $config->refreshToken) {
-            $client->refreshToken($config->refreshToken);
+        if (self::$accessToken) {
+            $client->setAccessToken(self::$accessToken);
         }
+
+        // TODO
+//         if (isset($config->refreshToken) && $config->refreshToken) {
+//             $client->refreshToken($config->refreshToken);
+//         }
 
         return $client;
     }
@@ -51,11 +53,26 @@ abstract class GoogleHelper
 
     public static function authenticate(\Google_Client $client, $code)
     {
-        $client->authenticate($code);
+        return $client->fetchAccessTokenWithAuthCode($code);
     }
 
     public static function getAccessToken(\Google_Client $client)
     {
-        return json_decode($client->getAccessToken());
+        return json_encode($client->getAccessToken());
+    }
+
+    public static function doRequest($method, $url, $body = null)
+    {
+        $client = self::getClient()->authorize(new \GuzzleHttp\Client());
+
+        $options = [];
+
+        if (isset($body)) {
+            $options['body'] = $body;
+        }
+
+        $response = $client->request($method, $url, $options);
+
+        return $response->getBody()->getContents();
     }
 }
