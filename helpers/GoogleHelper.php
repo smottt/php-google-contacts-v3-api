@@ -65,7 +65,11 @@ abstract class GoogleHelper
     {
         $client = self::getClient()->authorize(new \GuzzleHttp\Client());
 
-        $options = [];
+        $options = [
+            'headers' => [
+                'Content-Type' => 'application/atom+xml; charset=UTF-8; type=entry'
+            ]
+        ];
 
         if (isset($body)) {
             $options['body'] = $body;
