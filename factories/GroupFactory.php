@@ -7,14 +7,17 @@ use rapidweb\googlecontacts\objects\Group;
 
 abstract class GroupFactory
 {
-    public static function getAll()
+    public static function getAll(array $queryParams = [])
     {
-        $response = GoogleHelper::doRequest(
-            'GET',
-            'https://www.google.com/m8/feeds/groups/default/full?max-results=10000'
-        );
+        $url = 'https://www.google.com/m8/feeds/groups/default/full';
 
-        $xmlGroups = simplexml_load_string($response);
+        if ($queryParams) {
+            $url .= sprintf('?%s', http_build_query($queryParams));
+        }
+
+        $xmlGroups = simplexml_load_string(
+            GoogleHelper::doRequest('GET', $url)
+        );
 
         $groupsArray = [];
 

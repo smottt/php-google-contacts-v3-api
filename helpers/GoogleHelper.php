@@ -6,8 +6,14 @@ abstract class GoogleHelper
 {
     private static $accessToken;
 
+    private static $config;
+
     private static function loadConfig()
     {
+        if (self::$config) {
+            return self::$config;
+        }
+
         return json_decode(
             file_get_contents(__DIR__ . '/../.config.json'),
             true
@@ -17,6 +23,11 @@ abstract class GoogleHelper
     public static function setAccessToken(array $accessToken)
     {
         self::$accessToken = $accessToken;
+    }
+
+    public static function setConfig(array $config)
+    {
+        self::$config = $config;
     }
 
     public static function getClient()
